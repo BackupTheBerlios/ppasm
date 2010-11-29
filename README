@@ -1,0 +1,26 @@
+FEATURES:
+    - open source
+    - POSIX multiplatform, should compile on mingw32, works even on big endian platforms(tested on sparc4v)
+    - it's plain c, shoul be fast and efficent even on low end pc's
+    - unicode support (any characters that are not in read_line 2nd and 3rd argument and that return true
+      with is_valid(label) function)
+    - label arithmetic (I decided to leave it without parentheses since there's no much need for that)
+    - rudimentary disassembler(not yet tested on big-endian)
+
+TODO:
+    - fix the loader
+    - extend for more than 512 instructions
+    - different clocksel directives & co
+    - different syntaxes(for use with c preprocessor for example) (PARTIAL)
+    - loader
+    - some kind of BNF
+    - test on mingw32
+
+ISSUES:
+    -if you get SIGBUS error, it has to do with alignment on your arch, you have to tweak pragma pack()
+     in types.h, see http://cmynhier.blogspot.com/2008/10/memory-alignment-on-sparc-or-300x.html
+
+CREDITS:
+    Thanks to Cliff Biffle http://www.cliff.biffle.org/ for documenting the Propeller Tool format.
+    http://forums.parallax.com/showthread.php?t=106314&highlight=serial+lfsr
+

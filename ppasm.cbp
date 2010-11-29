@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ppasm" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/ppasm" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-v5 -l -u1 /home/jcd/projects/ppasm/bin/Debug/test.pasm" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/ppasm" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DNDEBUG" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c99 -Wno-parentheses" />
+		</Compiler>
+		<Unit filename="LICENSE" />
+		<Unit filename="Makefile" />
+		<Unit filename="README" />
+		<Unit filename="assemble.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="assemble.h" />
+		<Unit filename="bin/Debug/1.pasm" />
+		<Unit filename="config.h" />
+		<Unit filename="containers.h" />
+		<Unit filename="expression.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="expression.h" />
+		<Unit filename="loader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="loader.h" />
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="opcodes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="opcodes.h" />
+		<Unit filename="parse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="parse.h" />
+		<Unit filename="stringext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="stringext.h" />
+		<Unit filename="test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="types.h" />
+		<Unit filename="util.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="util.h" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
