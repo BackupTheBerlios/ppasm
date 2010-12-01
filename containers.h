@@ -1,6 +1,7 @@
 #ifndef CONTAINERS_H_INCLUDED
 #define CONTAINERS_H_INCLUDED
 #include <assert.h>
+#include <stdlib.h>
 
 #define VECTOR_DECLARE(NAME, TYPE) \
 typedef struct\
@@ -54,6 +55,20 @@ static inline void NAME##_remove(NAME* vec, size_t idx)\
 {\
     memmove(&vec->element[idx], &vec->element[idx + 1], sizeof(NAME) * (vec->size - idx - 1));\
     vec->size--;\
+}\
+
+#define DECLARE_FIND(NAME)\
+inline static size_t NAME##_find(NAME* value, NAME* array, size_t arraysz, int(*comparator)(NAME*, NAME*))\
+{\
+    size_t i = 0;\
+    for(; i < arraysz; i++)\
+    {\
+        if(!comparator(&array[i], value))\
+        {\
+            break;\
+        }\
+    }\
+    return i;\
 }\
 
 //*/

@@ -14,8 +14,14 @@
 #define MAX_ERROR_STRING_SIZE 1024
 #define MAX_INSTRUCTIONS 512
 
-#define VERSION_MINOR 4
+#define VERSION_MINOR 5
 #define VERSION_MAJOR 0
 /*
 #define DO_TESTS
+do the tests instead of main
+*/
+
+/*
+#define ALT_SERIAL_IOCTL
+alternative IOCTL calls, may work on your hardware
 */

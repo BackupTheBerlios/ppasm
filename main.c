@@ -26,7 +26,7 @@ options:\n\
         -r: raw output, no propeller tool bootloader\n\
         -l: generate listing file\n\
         -d: disassemble to stdout\n\
-        -o outfile: specify the output file\n\
+        -o <outfile>: specify the output file\n\
         -h: this help message\n\
         -v[0-9]: verbose level\n\
         -u[0-4]: download a program to propeller\n\
@@ -34,13 +34,14 @@ options:\n\
                  1 - download to ram and run\n\
                  2 - program eeprom\n\
                  3 - program eeprom and run\n\
-        -s device: serial port, where propeller is located"
+        -s <device>: serial port, where propeller is located"
 
 #define QUOTE_X(t) #t
 #define QUOTE(t)QUOTE_X(t)
 #define DOT "."
+#define SPACE " "
 static const char helpmsg[] =
-    HELPMSG1""QUOTE(VERSION_MAJOR)""DOT""QUOTE(VERSION_MINOR)""HELPMSG2""__DATE__""HELPMSG3;
+    HELPMSG1""QUOTE(VERSION_MAJOR)""DOT""QUOTE(VERSION_MINOR)""HELPMSG2""__DATE__""SPACE""__TIME__""HELPMSG3;
 
 const syntax_t parallax_syntax =
 {

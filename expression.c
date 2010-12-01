@@ -63,7 +63,7 @@ const char* expression_evaluate(expression_t** exp, ulong* result)
         {
             size_t lpos = find_addr_label((*exp)->data.label);
             if(lpos == symtable.size)
-                return "cant' evaluate the expression";
+                return "cant' resolve a label";
             else /* converting label to its value and putting to the expression */
             {
                 free((*exp)->data.label);

@@ -7,6 +7,7 @@
 #define CMD_EEPROM 2
 #define CMD_EEPROM_RUN 3
 
+void encode(u8* buff, u32 data);
 void prop_action(const char* device, u32 cmd);
 
 #endif // LOADER_H_INCLUDED

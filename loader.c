@@ -14,16 +14,20 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
-
+#include <poll.h>
 
 /*
-the source code here is mostly ported from here
+Thanks all the folks on parallax forum for documenting the serial protocol
+check out here
 http://forums.parallax.com/showthread.php?t=106314&highlight=serial+lfsr
-I will rework it in the near future with select if I get this to work
+I used the chip's documentation, and took a look at the code of other people in the forums,
+I used the lfsr algorithm but split the recieve bit function and redid it with poll() for
+efficency. It schould autmatically detect avalible data, so it schould improve the detection rate
 */
 
-static u8 lfsr = 'P'; /* lfsr to communicate with propeller */
+static u8 lfsr = 'P'; /* lfsr to communicate with propeller, initialized with 'P' */
 static int fd; /* serial port file descriptor */
+static struct termios oldtio; /* saved serial port settings to restore after the use of serial port */
 
 /*****************************************************************\
 *                                                                 *
@@ -39,18 +43,23 @@ static unsigned lfsr_step()
 
 /**********************************************************************************\
 *                                                                                  *
-*   Encodes @param data in 11 bytes of @param buff, ready to be send to propeller. *
+*   Encodes @param data as a series of short/long pulses whith 3 bits/bye in       *
+*   11 bytes of @param buff, ready to be send to propeller.                        *
 *                                                                                  *
 \**********************************************************************************/
-void encode(u8 buff[], u32 data)
+void encode(u8* buff, u32 data)
 {
-    u8 i = 0;
-    for(; i < 10; i++)
+    /* 0x92 = 10010010 */
+    /*         ^  ^  ^ */
+    unsigned i = 0;
+    for (; i < 10; i++)
     {
-        buff[i] = 0b10010010 | data & 0b00000001 | (data & 0b00000010) << 2 | (data & 0b00000100) << 4;
-        data >>= 3;
+        buff[i] = 0x92 | (data & 1) | (data & 2) << 2 | (data & 4) << 4;
+        data >>= 3; /* process next 3 bits of u32 data */
     }
-    buff[i] = 0b11110010 | (data & 0b00000001) | (data & 0b00000010) << 2 ;
+    /* the second to last bit in u8 is unused so 0xF2 instead of 0x92 and
+    (data & 4) << 4 is skipped since it is the 33rd bit of data */
+    buff[10] = 0xF2 | data & 1 | (data & 2) << 2;
 }
 
 /*****************************************************************\
@@ -60,23 +69,22 @@ void encode(u8 buff[], u32 data)
 \*****************************************************************/
 void enable_dtr()
 {
-    int result, controlbits = TIOCM_DTR;
-    result = ioctl(fd, TIOCMBIS, &controlbits);
-    if(result < 0)
-            sys_error("enable_dtr: error getting serial port options");
-
-    /*
+    #ifdef ALT_SERIAL_IOCTL
     int controlbits, result;
     result = ioctl(fd, TIOCMGET, &controlbits);
     if(result == -1)
-            sys_error("enable_dtr: error getting serial port options");
+        sys_error("enable_dtr: error getting serial port options");
 
     controlbits |= TIOCM_DTR;
     result = ioctl(fd, TIOCMSET, &controlbits);
     if(result == -1)
-            sys_error("enable_dtr: error setting serial port options");
-
-    */
+        sys_error("enable_dtr: error setting serial port options");
+    #else
+    int result, controlbits = TIOCM_DTR;
+    result = ioctl(fd, TIOCMBIS, &controlbits);
+    if(result < 0)
+        sys_error("enable_dtr: error getting serial port options");
+    #endif
 }
 
 /*****************************************************************\
@@ -86,25 +94,23 @@ void enable_dtr()
 \*****************************************************************/
 void disable_dtr()
 {
-    int result, controlbits = TIOCM_DTR;
-    result = ioctl(fd, TIOCMBIC, &controlbits);
-    if(result < 0)
-            sys_error("enable_dtr: error getting serial port options");
-
-    /* alternative style
+    #ifdef ALT_SERIAL_CTL
     int controlbits, result;
     result = ioctl(fd, TIOCMGET, &controlbits);
     if(!result)
-            sys_error("disable_dtr: error getting serial port options");
+        sys_error("disable_dtr: error getting serial port options");
 
     controlbits &= ~TIOCM_DTR;
     result = ioctl(fd, TIOCMSET, &controlbits);
     if(!result)
-            sys_error("disable_dtr: error setting serial port options");
-
-*/
+        sys_error("disable_dtr: error setting serial port options");
+    #else
+    int result, controlbits = TIOCM_DTR;
+    result = ioctl(fd, TIOCMBIC, &controlbits);
+    if(result < 0)
+        sys_error("enable_dtr: error getting serial port options");
+    #endif
 }
-
 
 /*****************************************************************\
 *                                                                 *
@@ -144,87 +150,65 @@ void prop_send_u32(u32 data)
 
 /*****************************************************************\
 *                                                                 *
-*   Recieves a bit from propeller on device @param fd.            *
+*   Recieves a bit of data from propeller.                        *
 *                                                                 *
 \*****************************************************************/
-u8 prop_recieve_bit(unsigned echo_on, unsigned timeout)
+u8 recieve(int timeout)
 {
-    ulong t1 = get_time_ms();
-    u8 f9 = 0xF9;
-    u8 bit;
-    int result;
-
-    while(!echo_on || get_time_ms() - t1 < timeout)
-    {
-        if(echo_on)
-        {
-            serial_write_buffer(&f9, 1);
-            sleep_msec(25);
-        }
-        if(!echo_on || (result = read(fd, &bit, 1)) > 0)
-        {
-            if(result > 0)
-            {
-                bit -= 0xFE;
-
-                if (bit > 1)
-                    fatal("Receiving bit failed!");
-
-                return bit == 1;
-            }
-        }
-    }
-    fatal("%s timed out!", __FUNCTION__);
-    return 0;
-}
-
-u8 recv1(ulong timeout)
-{
-    ulong t1 = get_time_ms();
-    u8 byte;
-
-    do
-    {
-        size_t num_bytes = read(fd, &byte, 1);
-        if(num_bytes == 1)
-            return byte - 0xFE;
-        else if(num_bytes < 0)
-            sys_error("error while reading Propeller's data");
-    }
-    while(get_time_ms() - t1 < timeout);
-
-    fatal("recv1 timeout, no hardware?");
-    return 0;
-}
-
-u8 recv1_select(ulong timeout)
-{
-    u8 byte;
     size_t num_bytes;
-    int result;
-    struct timeval tv;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = timeout * 1000;
+    u8 byte;
 
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(fd, &readfds);
+    struct pollfd fds = { fd, POLLIN | POLLPRI, 0 };
+    num_bytes = poll(&fds, 1, timeout);
+    if(num_bytes < 0)
+        fatal("poll failed");
 
-    result = select(fd + 1, &readfds, NULL, NULL, &tv);
-    if(result < 0)
-        fatal("select() on fd failed");
-
-    if(FD_ISSET(fd, &readfds))
+    if((fds.revents & POLLIN) || (fds.revents & POLLPRI))
     {
         num_bytes = read(fd, &byte, 1);
-        if(result < 1)
-            sys_error("serial read failed");
+        if(num_bytes < 1)
+            sys_error("recv1_select() serial read failed");
     }
+    else if((fds.revents & POLLERR) || (fds.revents & POLLHUP) || (fds.revents & POLLHUP))
+        fatal("error in poll");
     else
-        fatal("%s: timeout, propeller hardware not found.", __FUNCTION__);
+        fatal("%s: timed out, propeller hardware not found.", __FUNCTION__);
 
     return byte - 0xFE;
 }
+
+/************************************************************************************\
+*                                                                                    *
+*   Recieves propellers'answers while sending 0xF9 each 25 msec.                     *
+*   @param timeout to wait.                                                          *
+*                                                                                    *
+\************************************************************************************/
+u8 recieve_pinging(int timeout)
+{
+    size_t num_bytes, t1 = get_time_ms();
+    u8 byte, f9 = 0xF9;
+    struct pollfd fds = { fd, POLLIN | POLLPRI, 0 };
+
+    while(get_time_ms() - t1 < timeout)
+    {
+        write(fd, &f9, 1);
+        poll(&fds, 1, 25);
+
+        if((fds.revents & POLLIN) || (fds.revents & POLLPRI))
+        {
+            num_bytes = read(fd, &byte, 1);
+            if(num_bytes < 1)
+                sys_error("recv_echo: serial read failed!");
+            return byte - 0xFE;
+        }
+        else if((fds.revents & POLLERR) || (fds.revents & POLLHUP) || (fds.revents & POLLHUP))
+            fatal("error in poll");
+    }
+
+    fatal("%s: propeller timed out", __FUNCTION__);
+    return 0;
+}
+
 
 /*******************************************************************************\
 *                                                                               *
@@ -234,16 +218,15 @@ u8 recv1_select(ulong timeout)
 \********************************************************************************/
 u8 prop_init()
 {
-    u8 buff[509];
+    u8 buff[258];
     prop_reset();
     sleep_msec(95);
 
-
     lfsr = 'P'; /* resetting lfsr */
 
-    *buff = 0xF9;
+    *buff = 0xF9; /* Timing calibration */
 
-    /* Transmit timing Calibration 0xF9 and 250 bytes lfsr data */
+    /* 250 bytes of lfsr data */
     for(unsigned i = 1; i < 251; i++)
     {
         buff[i] = (lfsr_step() | 0xFE);
@@ -255,38 +238,35 @@ u8 prop_init()
     {
         buff[i] = 0xF9;
     }
-
     serial_write_buffer(buff, 258);
     fsync(fd);
 
     /* Recieve 250 bytes of LFSR data */
     for(unsigned i = 0; i < 250; i++)
     {
-        if(recv1_select(100) != lfsr_step())
+        if(recieve(100) != lfsr_step())
             fatal("recieved wrong LFSR, lost hardware connection?");
     }
 
     u8 version = 0;
     for(unsigned i = 0; i < 8; ++i)
-        version |= (recv1_select(200) << i);
+        version |= (recieve(200) << i);
 
     return version;
 }
 
 /*****************************************************************\
+*                                                                 *
 *   Sets serial port @param fd settings.                          *
+*                                                                 *
 \*****************************************************************/
-static struct termios oldtio, tio;
-
 void set_serial()
 {
-    int result;
-
-    result = tcgetattr(fd, &oldtio); /* save current serial port settings */
+    int result = tcgetattr(fd, &oldtio); /* save current serial port settings */
     if(result < 0)
-        sys_error("failed to get serial attributes");
+        sys_error("failed to retrieve serial port attributes");
 
-
+    struct termios tio;
     memset(&tio, 0, sizeof(tio)); /* clear struct for new port settings */
 
     tio.c_cflag = B115200 | CS8 | CLOCAL | CREAD;
@@ -303,7 +283,7 @@ void set_serial()
 
     result = tcsetattr(fd, TCSANOW, &tio);
     if(result < 0)
-        sys_error("failed to set serial attributes");
+        sys_error("failed to set serial port attributes");
 }
 
 
@@ -314,9 +294,8 @@ void set_serial()
 \*****************************************************************/
 void restore_serial()
 {
-    int result = tcsetattr(fd,TCSANOW, &oldtio);
-    if(result < 0)
-        sys_error("failed to restore serial attributes");
+    if(!tcsetattr(fd,TCSANOW, &oldtio))
+        sys_error("failed to restore serial port attributes");
 }
 
 /*****************************************************************\
@@ -329,12 +308,12 @@ void set_realtime_priority()
     struct sched_param sparam;
     sparam.sched_priority = 10;
     if(sched_setscheduler(0, SCHED_FIFO, &sparam))
-        fprintf(stderr, "error setting realtime priority\n");
+        fprintf(stderr, "failed to set realtime priority\n");
 }
 
 /*****************************************************************\
 *                                                                 *
-*   TODO write a proper serial port finder               *
+*   TODO write a proper serial port finder                        *
 *                                                                 *
 \*****************************************************************/
 int find_serial()
@@ -370,41 +349,6 @@ int find_serial()
     return fd;
 }
 
-u8 recieve_while_pinging(ulong timeout)
-{
-    u8 byte, f9 = 0xF9;
-    size_t num_bytes;
-    struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 25 * 1000;
-
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(fd, &readfds);
-
-    ulong t = get_time_ms();
-    while(get_time_ms() - t < timeout)
-    {
-        write(fd, &f9, 1); /* ping */
-        select(fd + 1, &readfds, NULL, NULL, &tv); /* waiting for pong */
-
-        if(FD_ISSET(fd, &readfds))
-        {
-            num_bytes = read(fd, &byte, 1);
-            if(num_bytes < 1)
-                sys_error("serial read failed");
-
-            printf("read %c\n", byte);
-
-            return byte - 0xFE;
-        }
-    }
-
-    fatal("%s: waiting for propeller confirmation timed out.", __FUNCTION__);
-    return 0;
-}
-
-
 /************************************************************************************\
 *                                                                                    *
 *   Sends a stream of instructions @param prog of length @param progsz to propeller. *
@@ -412,30 +356,39 @@ u8 recieve_while_pinging(ulong timeout)
 \************************************************************************************/
 static void prop_send_program(instruction_t* prog, size_t progsz)
 {
-    FILE* file = tmpfile();
-    assemble(file);
-    size_t imgsz = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    size_t imgsz = progsz * 4 + PREAMBLE_SIZE;
     u8* image = malloc(imgsz);
-    fread(image, 1, imgsz, file);
+    mlock(image, imgsz);
+    #ifdef PPASM_LITTLE_ENDIAN
+    create_preamble(image, (u8*)prog, progsz);
+    memcpy(image + PREAMBLE_SIZE, (u8*)prog, imgsz - PREAMBLE_SIZE);
+    #else
+    create_preamble(image, &prog[0].byte[3], progsz);
+    memcpy(image + PREAMBLE_SIZE, (u8*)&prog[0].byte[3], imgsz - PREAMBLE_SIZE);
+    #endif
 
-    u32 op;
-    prop_send_u32(imgsz); /* transmit the number of u32 in the image */
-
-    for (unsigned i = 0; i < imgsz; i += 4)
+    u32 s;
+    unsigned num_u32 = (imgsz) / 4;
+    prop_send_u32(num_u32); /* transmit the number of u32 in the image */
+    printf("sending %lu bytes %lu longs\n", imgsz, imgsz / 4);
+    for(unsigned i = 0; i < num_u32; i ++)
     {
-        op = (u32)(image[i] |
-                   image[i + 1] << 8 |
-                   image[i + 2] << 16 |
-                   image[i + 3] << 24);
+        unsigned j = i << 2;
+        s = (u32)(image[j + 0]) |
+             (u32)(image[j + 1] << 8) |
+             (u32)(image[j + 2] << 16) |
+             (u32)(image[j + 3] << 24);
 
-        prop_send_u32(op);
+        prop_send_u32(s);
+
     }
-    fsync(fd);
 
     /* Read a bit indicating whether checksum failed */
-    if(recieve_while_pinging(8000))
+    if(recieve_pinging(16000))
         fatal("ram checksum failed");
+
+    munlock(image, imgsz);
+    free(image);
 }
 
 /**********************************************************************\
@@ -446,26 +399,31 @@ static void prop_send_program(instruction_t* prog, size_t progsz)
 \**********************************************************************/
 void prop_action(const char* device, u32 command)
 {
-    //fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
     fd = open(device, O_RDWR | O_NOCTTY);
     if(fd < 3)
         sys_error("failed to open serial port");
 
     if(opt_verbose > 4)
-        fprintf(vfile, "opened %s r/w fd: %i\n", device, fd);
-    //fcntl(fd, F_SETFL, O_NONBLOCK); /* make the reads non-blocking */
+        fprintf(vfile, "opened %s r/w fd: %i command: %u\n", device, fd, command);
 
+    mlock(&program, num_ops * 4);
     set_serial();
 
-    mlockall(MCL_FUTURE);
     set_realtime_priority();
 
     u8 version = prop_init();
-    printf("found propeller ver %u\n", version);
+    printf("found propeller version %u\n", version);
 
-    prop_send_u32(command);
-
-    prop_send_program(program, num_ops);
+    if(version == 1)
+    {
+        prop_send_u32(command);
+        if(command != 1)
+            fatal("FIXME: only load to ram and run is supported for now");
+        prop_send_program(program, num_ops);
+        fprintf(stdout, "program downloaded successfuly");
+    }
+    else
+        fatal("wrong propeller version");
 
     munlockall();
     restore_serial(fd);

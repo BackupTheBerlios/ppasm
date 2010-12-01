@@ -1,4 +1,6 @@
 #include "util.h"
+#include "opcodes.h"
+#include "containers.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -44,9 +46,25 @@ void fatal(const char* fmt, ...)
 }
 
 
+DECLARE_FIND(op_pair_t);
+
+int compare_op_name(op_pair_t* op1, op_pair_t* op2)
+{
+    return strcmp(op1->string, op2->string);
+}
+
+DECLARE_FIND(pair_t);
+int compare_name(pair_t* op1, pair_t* op2)
+{
+    return strcmp(op1->string, op2->string);
+}
+
+
+
 /*****************************************************************\
 *                                                                 *
 *   Returns TRUE if @param token is a valid label.                *
+*   TODO: make it return error description                        *
 *                                                                 *
 \*****************************************************************/
 int is_valid_label(const char* str)
@@ -55,6 +73,22 @@ int is_valid_label(const char* str)
     {
         if(*str == syntax->local_label_prefix) /* skipping local lable modifier */
             str++;
+
+        op_pair_t v;
+        v.string = str;
+        size_t i = op_pair_t_find(&v, opcodes, NUM_OPCODES, &compare_op_name);
+        if(i != NUM_OPCODES)
+            return 0;
+
+        pair_t p;
+        p.string = str;
+        i = pair_t_find(&p, if_pairs, NUM_IFS, &compare_name);
+        if(i != NUM_IFS)
+            return 0;
+
+        i = pair_t_find(&p, special_regs, NUM_SPECIAL_REGS, &compare_name);
+        if(i != NUM_SPECIAL_REGS)
+            return 0;
 
         size_t strsz = strlen(str);
         if(isalpha(*str))

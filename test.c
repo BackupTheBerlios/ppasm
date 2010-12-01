@@ -3,6 +3,7 @@
 #include "expression.h"
 #include "containers.h"
 #include "stringext.h"
+#include "loader.h"
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -265,7 +266,22 @@ void test_time()
     fprintf(stdout, "%s:\tpassed\n", __FUNCTION__);
 }
 
+void test_loader()
+{
+    u8 b[11];
+    u32 data = 0x5c7c0000;
+    encode(b, data);
+    assert(b[0] == 0x92 && b[1] == 0x92 && b[2] == 0x92 && b[3] == 0x92 &&
+           b[4] == 0x92 && b[5] == 0x92 && b[6] == 0xdb && b[7] == 0x9b &&
+           b[8] == 0xd2 && b[9] == 0x9b && b[10] == 0xf3);
 
+/*
+    data = 8;
+    encode(b, data);
+    assert(b[0] == 0x
+    fprintf(stdout, "%s:\tpassed\n", __FUNCTION__);
+*/
+}
 
 /***************************************************\
 *                                                   *
@@ -282,6 +298,7 @@ int main(int argc, char* argv[])
     test_conatiners();
     test_expressions();
     test_time();
+    test_loader();
     return 0;
 }
 #endif
