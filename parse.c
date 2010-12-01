@@ -2,6 +2,7 @@
 #include "opcodes.h"
 #include "assemble.h"
 #include "expression.h"
+#include "stringext.h"
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>

@@ -1,5 +1,5 @@
 #include "expression.h"
-
+#include <stdlib.h>
 VECTOR_DECLARE(veclable, pair_t);
 veclable symtable;
 

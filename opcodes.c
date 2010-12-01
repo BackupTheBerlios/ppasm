@@ -139,14 +139,34 @@ pair_t special_regs[] = {
 };
 
 /*****************************************************************\
-*   Finds index of an if pair by it's @param prefix.             *
+*                                                                 *
+*   Finds index of an if pair by it's @param value.               *
+*                                                                 *
 \*****************************************************************/
-u8 find_if_by_prefix(u8 prefix)
+u8 find_if_by_value(u8 value)
 {
     u8 j = 0;
     for(; j < NUM_IFS; j++)
     {
-        if(if_pairs[j].value == prefix)
+        if(if_pairs[j].value == value)
+        {
+            break;
+        }
+    }
+    return j;
+}
+
+/*****************************************************************\
+*                                                                 *
+*   Finds index of an opcode by it's @param value.                *
+*                                                                 *
+\*****************************************************************/
+u8 find_opcode_by_value(u8 value)
+{
+    u8 j = 0;
+    for(; j < NUM_OPCODES; j++)
+    {
+        if(opcodes[j].opcode == value)
         {
             break;
         }

@@ -1,9 +1,6 @@
 #ifndef UTIL_H_INCLUDED
 #define UTIL_H_INCLUDED
 #include "types.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include "stringext.h"
 #define MIN(a, b) a < b ? a : b;
 #define MAX(a, b) a > b ? a : b;
 

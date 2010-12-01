@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
-	<File name="Makefile" open="1" top="0" tabpos="11">
+	<File name="Makefile" open="0" top="0" tabpos="11">
 		<Cursor position="229" topLine="0" />
 	</File>
-	<File name="README" open="1" top="0" tabpos="12">
+	<File name="README" open="0" top="0" tabpos="12">
 		<Cursor position="1132" topLine="0" />
 	</File>
 	<File name="assemble.c" open="0" top="0" tabpos="10">
-		<Cursor position="2433" topLine="64" />
+		<Cursor position="4619" topLine="122" />
 	</File>
-	<File name="assemble.h" open="1" top="0" tabpos="3">
+	<File name="assemble.h" open="0" top="0" tabpos="3">
 		<Cursor position="167" topLine="0" />
 	</File>
-	<File name="bin/Debug/1.pasm" open="1" top="1" tabpos="1">
+	<File name="bin/Debug/1.pasm" open="1" top="0" tabpos="1">
 		<Cursor position="8" topLine="0" />
 	</File>
 	<File name="config.h" open="0" top="0" tabpos="12">
-		<Cursor position="509" topLine="0" />
+		<Cursor position="556" topLine="2" />
 	</File>
-	<File name="containers.h" open="0" top="0" tabpos="6">
+	<File name="containers.h" open="1" top="0" tabpos="5">
 		<Cursor position="115" topLine="0" />
 	</File>
-	<File name="expression.c" open="1" top="0" tabpos="6">
-		<Cursor position="4654" topLine="143" />
+	<File name="expression.c" open="0" top="0" tabpos="6">
+		<Cursor position="42" topLine="0" />
 	</File>
 	<File name="expression.h" open="0" top="0" tabpos="10">
 		<Cursor position="695" topLine="21" />
 	</File>
-	<File name="loader.c" open="1" top="0" tabpos="4">
-		<Cursor position="11621" topLine="345" />
+	<File name="loader.c" open="1" top="1" tabpos="1">
+		<Cursor position="11523" topLine="456" />
 	</File>
-	<File name="loader.h" open="1" top="0" tabpos="10">
+	<File name="loader.h" open="0" top="0" tabpos="10">
 		<Cursor position="72" topLine="0" />
 	</File>
-	<File name="main.c" open="1" top="0" tabpos="2">
-		<Cursor position="1120" topLine="23" />
+	<File name="main.c" open="1" top="0" tabpos="4">
+		<Cursor position="1626" topLine="141" />
 	</File>
 	<File name="opcodes.c" open="0" top="0" tabpos="5">
-		<Cursor position="5439" topLine="134" />
+		<Cursor position="5582" topLine="154" />
 	</File>
 	<File name="opcodes.h" open="0" top="0" tabpos="6">
-		<Cursor position="3748" topLine="126" />
+		<Cursor position="3777" topLine="133" />
 	</File>
-	<File name="parse.c" open="1" top="0" tabpos="8">
-		<Cursor position="11660" topLine="396" />
+	<File name="parse.c" open="0" top="0" tabpos="8">
+		<Cursor position="105" topLine="0" />
 	</File>
 	<File name="parse.h" open="0" top="0" tabpos="5">
 		<Cursor position="117" topLine="0" />
@@ -56,15 +56,15 @@
 		<Cursor position="136" topLine="0" />
 	</File>
 	<File name="test.c" open="0" top="0" tabpos="3">
-		<Cursor position="4940" topLine="254" />
+		<Cursor position="5880" topLine="252" />
 	</File>
-	<File name="types.h" open="1" top="0" tabpos="7">
-		<Cursor position="1945" topLine="95" />
+	<File name="types.h" open="0" top="0" tabpos="7">
+		<Cursor position="61" topLine="0" />
 	</File>
-	<File name="util.c" open="1" top="0" tabpos="9">
-		<Cursor position="3505" topLine="96" />
+	<File name="util.c" open="0" top="0" tabpos="9">
+		<Cursor position="3834" topLine="119" />
 	</File>
-	<File name="util.h" open="0" top="0" tabpos="6">
-		<Cursor position="520" topLine="0" />
+	<File name="util.h" open="1" top="0" tabpos="6">
+		<Cursor position="47" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

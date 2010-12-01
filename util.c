@@ -1,14 +1,18 @@
 #include "util.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <time.h>
 
 /**********************************************\
-    System error function, doesnt' return      *
+*                                              *
+*    System error function, doesnt' return     *
+*                                              *
 \**********************************************/
 void sys_error(const char* msg)
 {
@@ -17,7 +21,9 @@ void sys_error(const char* msg)
 }
 
 /**********************************************\
-    Fatal error, doesn't return.               *
+*                                              *
+*    Fatal error, doesn't return.              *
+*                                              *
 \**********************************************/
 void fatal(const char* fmt, ...)
 {
@@ -39,7 +45,9 @@ void fatal(const char* fmt, ...)
 
 
 /*****************************************************************\
+*                                                                 *
 *   Returns TRUE if @param token is a valid label.                *
+*                                                                 *
 \*****************************************************************/
 int is_valid_label(const char* str)
 {
@@ -65,8 +73,10 @@ int is_valid_label(const char* str)
 }
 
 /*****************************************************************\
+*                                                                 *
 *   Returns TRUE if @param token is a valid end of the line       *
 *   comment                                                       *
+*                                                                 *
 \*****************************************************************/
 int is_comment(const char* token)
 {
@@ -76,7 +86,9 @@ int is_comment(const char* token)
 
 
 /*****************************************************************\
+*                                                                 *
 * @return returns non zero if the label was local                 *
+*                                                                 *
 \*****************************************************************/
 int is_local_label(const char* label)
 {
@@ -84,7 +96,9 @@ int is_local_label(const char* label)
 }
 
 /*****************************************************************\
+*                                                                 *
 * @return returns non zero if the label was local                 *
+*                                                                 *
 \*****************************************************************/
 int is_valid_operator(const char ch)
 {
@@ -101,11 +115,12 @@ int is_valid_operator(const char ch)
 \*****************************************************************/
 void sleep_msec(ulong msec)
 {
-    #ifdef unix
+    #if defined(__unix)
     struct timespec req;
     struct timespec rem;
-    req.tv_sec = 0;        /* seconds */
-    req.tv_nsec = msec * 1000000;       /* nanoseconds */
+
+    req.tv_sec = msec / 1000;
+    req.tv_nsec = (msec * 1000000) % 1000000000;
 
     while(nanosleep(&req, &rem))
     {
@@ -113,6 +128,8 @@ void sleep_msec(ulong msec)
     }
     #elif defined(WIN32)
     Sleep(milliseconds);
+    #else
+    #error implement your sleep function here
 	#endif
 }
 

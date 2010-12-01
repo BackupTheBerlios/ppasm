@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="-v5 -l -u1 /home/jcd/projects/ppasm/bin/Debug/test.pasm" />
+				<Option parameters="-s /dev/ttyUSB1 -v5 -u1 /home/jcd/projects/ppasm/bin/Debug/1.pasm" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>

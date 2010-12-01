@@ -123,19 +123,18 @@ void generate_listing(FILE* file, size_t num_ops)
     if(!num_ops)
         num_ops = count_instructions();
 
-    for(u16 i = 0; i < num_ops; i++)
+    for(unsigned i = 0; i < num_ops; i++)
     {
-        u8 j = find_if_by_prefix(program[i].data.cond);
-        u8 o = program[i].data.opcode;
+        u8 j = find_if_by_value(program[i].data.cond);
+        u8 o = find_opcode_by_value(program[i].data.opcode);
 
         assert(j != NUM_IFS);
 
         u16 dest =  ((u16)(program[i].data.desth)) << 8 | program[i].data.dest;
         u16 src =  ((u16)(program[i].data.srch)) << 8 | program[i].data.src;
 
-        fprintf(file, "%08X if_%s %s $%x, $%x zcri:%u%u%u%u\n", i, if_pairs[j].string, opcodes[o].string,
-                dest, src,
-                program[i].data.z, program[i].data.c, program[i].data.r, program[i].data.imm
-                );
+        fprintf(file, "%04X %08X if_%s %s $%x, $%x zcri:%u%u%u%u\n", i, program[i].raw, if_pairs[j].string,
+                opcodes[o].string, dest, src,
+                program[i].data.z, program[i].data.c, program[i].data.r, program[i].data.imm);
     }
 }

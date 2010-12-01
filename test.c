@@ -1,11 +1,13 @@
 #include "util.h"
 #include "containers.h"
 #include "expression.h"
+#include "containers.h"
+#include "stringext.h"
 #include <assert.h>
 #include <string.h>
-
+#include <stdlib.h>
 #ifdef DO_TESTS
-VECTOR_DECLARE(veclable, label_t);
+VECTOR_DECLARE(veclable, pair_t);
 extern veclable symtable;
 
 /*
@@ -252,6 +254,19 @@ void test_expressions()
     fprintf(stdout, "%s:\tpassed\n", __FUNCTION__);
 }
 
+void test_time()
+{
+    ulong t2, t1 = get_time_ms();
+
+    sleep_msec(1234); /* don't remove 1234, cause it tests overflow of tv.tv_nsec */
+    t2 = get_time_ms() - t1;
+
+    assert(t2 >= 1234);
+    fprintf(stdout, "%s:\tpassed\n", __FUNCTION__);
+}
+
+
+
 /***************************************************\
 *                                                   *
 *   Main tester entry.                              *
@@ -266,6 +281,7 @@ int main(int argc, char* argv[])
     test_strrm();
     test_conatiners();
     test_expressions();
+    test_time();
     return 0;
 }
 #endif

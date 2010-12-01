@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1291004002 source:/home/jcd/projects/ppasm/main.c
+1291005127 source:/home/jcd/projects/ppasm/main.c
 	"types.h"
 	"opcodes.h"
 	"parse.h"
@@ -13,7 +13,7 @@
 	<ctype.h>
 	<assert.h>
 
-1290981918 /home/jcd/projects/ppasm/types.h
+1291167927 /home/jcd/projects/ppasm/types.h
 	"config.h"
 	<stdint.h>
 	<limits.h>
@@ -22,34 +22,34 @@
 1290100613 /home/jcd/projects/ppasm/parse.h
 	"util.h"
 
-1290978782 /home/jcd/projects/ppasm/util.h
+1291167093 /home/jcd/projects/ppasm/util.h
 	"types.h"
-	<stdlib.h>
-	<stdio.h>
-	"stringext.h"
 
-1291001075 source:/home/jcd/projects/ppasm/parse.c
+1291167488 source:/home/jcd/projects/ppasm/parse.c
 	"parse.h"
 	"opcodes.h"
 	"assemble.h"
 	"expression.h"
+	"stringext.h"
 	<string.h>
 	<stdio.h>
 	<ctype.h>
 	<assert.h>
 	<strings.h>
 
-1290978799 source:/home/jcd/projects/ppasm/util.c
+1291168085 source:/home/jcd/projects/ppasm/util.c
 	"util.h"
 	<stdio.h>
+	<stdlib.h>
 	<stdarg.h>
 	<string.h>
 	<strings.h>
 	<ctype.h>
 	<assert.h>
 	<sys/time.h>
+	<time.h>
 
-1290964059 source:/home/jcd/projects/ppasm/assemble.c
+1291156654 source:/home/jcd/projects/ppasm/assemble.c
 	"assemble.h"
 	"util.h"
 	"opcodes.h"
@@ -60,21 +60,25 @@
 	<stdlib.h>
 	<stdio.h>
 
-1290879173 source:/home/jcd/projects/ppasm/test.c
+1291167915 source:/home/jcd/projects/ppasm/test.c
 	"util.h"
 	"containers.h"
 	"expression.h"
+	"containers.h"
+	"stringext.h"
 	<assert.h>
 	<string.h>
+	<stdlib.h>
 
-1290963859 source:/home/jcd/projects/ppasm/opcodes.c
+1291156552 source:/home/jcd/projects/ppasm/opcodes.c
 	"opcodes.h"
 
-1290907751 /home/jcd/projects/ppasm/opcodes.h
+1291156416 /home/jcd/projects/ppasm/opcodes.h
 	"types.h"
 
-1290983190 source:/home/jcd/projects/ppasm/expression.c
+1291167447 source:/home/jcd/projects/ppasm/expression.c
 	"expression.h"
+	<stdlib.h>
 
 1290909292 /home/jcd/projects/ppasm/expression.h
 	"types.h"
@@ -85,7 +89,7 @@
 1290629561 /home/jcd/projects/ppasm/containers.h
 	<assert.h>
 
-1290914162 /home/jcd/projects/ppasm/config.h
+1291168096 /home/jcd/projects/ppasm/config.h
 
 1290643039 source:/home/jcd/projects/ppasm/label.c
 	"label.h"
@@ -108,19 +112,21 @@
 	<stdlib.h>
 	<ctype.h>
 
-1291004671 source:/home/jcd/projects/ppasm/loader.c
+1291173443 source:/home/jcd/projects/ppasm/loader.c
 	"loader.h"
 	"util.h"
 	<sys/mman.h>
 	<sys/types.h>
 	<sys/stat.h>
 	<sys/ioctl.h>
+	<sys/select.h>
 	<time.h>
 	<fcntl.h>
 	<sched.h>
 	<termios.h>
 	<unistd.h>
 	<string.h>
+	<assert.h>
 
 1290963208 /home/jcd/projects/ppasm/loader.h
 	"types.h"
