@@ -34,7 +34,6 @@ extern expression_t*   unresolved_dest[MAX_INSTRUCTIONS];
 
 void init_symtable();
 void fini_symtable();
-size_t find_addr_label(const char* label_name);
 void expression_clear(expression_t* exp);
 const char* expression_evaluate(expression_t** exp, ulong* result);
 void evaluate_all_unresolved();

@@ -21,6 +21,54 @@ static size_t       curr_op = 0, line_num = 0;
 static const char*  last_label = 0;
 static char*        token = 0;
 
+DECLARE_FIND(op_pair_t);
+DECLARE_FIND(pair_t);
+
+/*****************************************************************\
+*                                                                 *
+*   Returns TRUE if @param token is a valid label.                *
+*   TODO: make it return error description                        *
+*                                                                 *
+\*****************************************************************/
+int is_valid_label(const char* str)
+{
+    if(str)
+    {
+        if(*str == syntax->local_label_prefix) /* skipping local lable modifier */
+            str++;
+
+        op_pair_t v;
+        v.string = str;
+        size_t i = op_pair_t_find(&v, opcodes, NUM_OPCODES, &op_pair_t_compare_string);
+        if(i != NUM_OPCODES)
+            return 0;
+
+        pair_t p;
+        p.string = str;
+        i = pair_t_find(&p, if_pairs, NUM_IFS, &pair_t_compare_string);
+        if(i != NUM_IFS)
+            return 0;
+
+        i = pair_t_find(&p, special_regs, NUM_SPECIAL_REGS, &pair_t_compare_string);
+        if(i != NUM_SPECIAL_REGS)
+            return 0;
+
+        size_t strsz = strlen(str);
+        if(isalpha(*str))
+        {
+            for(size_t i = 1; i < strsz; i++)
+            {
+                if(!isalnum(str[i]) && str[i] != '_' )
+                {
+                    return 0;
+                }
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*****************************************************************\
 * @return error message or 0 if everything is ok.                 *
 \*****************************************************************/
@@ -99,25 +147,25 @@ static const char* parse_special(expression_t** exp, unsigned bad)
     char lcas_token[tokensz + 1];
     lower_case(token, lcas_token, tokensz);
 
-    for(size_t i = 0; i < NUM_SPECIAL_REGS; i++)
+    pair_t p;
+    p.string = lcas_token;
+    size_t i = pair_t_find(&p, special_regs, NUM_SPECIAL_REGS, &pair_t_compare_string);
+    if(i != NUM_IFS)
     {
-        if(!strcmp(lcas_token, special_regs[i].string))
+        if(i > bad)
         {
-            if(i > bad)
-            {
-                if(opt_verbose > 4)
-                    fprintf(vfile, "\t\tspecial dest register\"%s\"\n", token);
+            if(opt_verbose > 4)
+                fprintf(vfile, "\t\tspecial dest register\"%s\"\n", token);
 
-                *exp = malloc(sizeof(expression_t));
-                (*exp)->type = EXP_NUMBER;
-                (*exp)->data.number = special_regs[i].value;
+            *exp = malloc(sizeof(expression_t));
+            (*exp)->type = EXP_NUMBER;
+            (*exp)->data.number = special_regs[i].value;
 
-                token = read_next();
-                return 0;
-            }
-            else
-                fatal("error: line: %lu, this register is read only(can only be a source)", line_num);
+            token = read_next();
+            return 0;
         }
+        else
+            fatal("error: line: %lu, this register is read only(can only be a source)", line_num);
     }
     return "not a special register";
 }
@@ -191,7 +239,9 @@ static const char* parse_addr_label()
             strcpy(tmp_name, last_label);
             strcat(tmp_name, token);
 
-            lpos = find_addr_label(tmp_name);
+            pair_t p;
+            p.string = tmp_name;
+            lpos = pair_t_find(&p, symtable.element, symtable.size, &pair_t_compare_string);
             if(lpos != symtable.size)
                 fatal("label %s was already defined!", tmp_name);
 
@@ -200,7 +250,9 @@ static const char* parse_addr_label()
         }
         else
         {
-            lpos = find_addr_label(token);
+            pair_t p;
+            p.string = token;
+            lpos = pair_t_find(&p, symtable.element, symtable.size, &pair_t_compare_string);
             if(lpos != symtable.size)
                 fatal("label %s was already defined!", token);
 
@@ -289,8 +341,10 @@ static const char* parse_flags()
 }
 
 /*****************************************************************\
+*                                                                 *
 *   Parses if_* prefixes.                                         *
 *   @return error message or 0 if everything is ok.               *
+*                                                                 *
 \*****************************************************************/
 static const char* parse_ifs()
 {
@@ -300,22 +354,24 @@ static const char* parse_ifs()
 
     if(lcas_token[0] == 'i' && lcas_token[1] == 'f' && lcas_token[2] == '_')
     {
-        for(int i = 0; i < NUM_IFS; i++)
+        pair_t p;
+        p.string = &lcas_token[3] /* skip "if_" */;
+        size_t i = pair_t_find(&p, if_pairs, NUM_IFS, &pair_t_compare_string);
+        if(i != NUM_IFS)
         {
-            if(!strcmp(if_pairs[i].string, &lcas_token[3]))
-            {
-                program[curr_op].data.cond = if_pairs[i].value;
+            program[curr_op].data.cond = if_pairs[i].value;
 
-                if(opt_verbose > 4)
-                    fprintf(vfile, "\tprefix \"%s\"\n", token);
+            if(opt_verbose > 4)
+                fprintf(vfile, "\tprefix \"%s\"\n", token);
 
-                token = read_next();
-                return 0;
-            }
+            token = read_next();
+            return 0;
         }
     }
 
-    program[curr_op].data.cond = 0b1111; /* default condition, only nop has 0b0000 which is handled by  a special case */
+    /* default condition, only nop has 0b0000 by default
+    which is overwritten by a special case anyway */
+    program[curr_op].data.cond = 0b1111;
     return "unknown IF_ predicate";
 }
 
@@ -399,57 +455,51 @@ static const char* parse_opcode()
     }
     else
     {
-        for(int i = 0; i < NUM_OPCODES; i++)
+        op_pair_t v;
+        v.string = lcas_token;
+        size_t i = op_pair_t_find(&v, opcodes, NUM_OPCODES, &op_pair_t_compare_string);
+        if(i == NUM_OPCODES)
+            return "unknown opcode";
+
+        if(opt_verbose > 4)
+            fprintf(vfile, "\topcode \"%s\"\n", token);
+
+        program[curr_op].data.opcode = opcodes[i].value;
+
+        /* assigning default flags */
+        program[curr_op].data.z = opcodes[i].flags.z;
+        program[curr_op].data.c = opcodes[i].flags.c;
+        program[curr_op].data.r = opcodes[i].flags.r;
+        program[curr_op].data.imm = opcodes[i].flags.imm;
+
+        /* check if we need special value in src register */
+        if(opcodes[i].flags.predefined_src)
         {
-            if(!strcmp(opcodes[i].string, lcas_token))
-            {
-                if(opt_verbose > 4)
-                    fprintf(vfile, "\topcode \"%s\"\n", token);
-
-                program[curr_op].data.opcode = opcodes[i].opcode;
-
-                /* assigning default flags */
-                program[curr_op].data.z = opcodes[i].flags.z;
-                program[curr_op].data.c = opcodes[i].flags.c;
-                program[curr_op].data.r = opcodes[i].flags.r;
-                program[curr_op].data.imm = opcodes[i].flags.imm;
-
-                /* check if we need special value in src register */
-                if(opcodes[i].flags.predefined_src)
-                {
-                    program[curr_op].data.src = opcodes[i].src;
-                    program[curr_op].data.srch = 0;
-                }
-
-                token = read_next();
-
-                /* processing destination */
-                if(opcodes[i].flags.need_dest)
-                {
-                    const char* errmsg = parse_dest();
-                    if(errmsg)
-                        return errmsg;
-                }
-
-                /* processing source */
-                if(opcodes[i].flags.need_src)
-                {
-                    const char* errmsg = parse_src();
-                    if(errmsg)
-                        return errmsg;
-                }
-
-                while(!parse_flags()); /* parse all valid w* flags */
-
-                goto out; /* to avoid code duplication */
-            }
+            program[curr_op].data.src = opcodes[i].src;
+            program[curr_op].data.srch = 0;
         }
 
-        /* no valid opcode or special case was found */
-        return "unknown opcode";
+        token = read_next();
+
+        /* processing destination */
+        if(opcodes[i].flags.need_dest)
+        {
+            const char* errmsg = parse_dest();
+            if(errmsg)
+                return errmsg;
+        }
+
+        /* processing source */
+        if(opcodes[i].flags.need_src)
+        {
+            const char* errmsg = parse_src();
+            if(errmsg)
+                return errmsg;
+        }
+
+        while(!parse_flags()); /* parse all valid w* flags */
     }
 
-out:
     flags[curr_op].valid = 1; /* marking current instruction as valid */
     curr_op++;
     return 0;
@@ -564,9 +614,9 @@ void parse(FILE* file)
 
         while(token && !is_comment(token))
         {
-            if(parse_directives())
+            if(parse_directives()) /* is this a directory */
             {
-                if(parse_opcode())
+                if(parse_opcode()) /* if this is not an opcode, it must be a label */
                 {
                     if(errmsg = parse_addr_label())
                         fatal("line %u: failed to parse label \"%s\": %s", line_num, token, errmsg);
@@ -584,5 +634,16 @@ void parse(FILE* file)
         fprintf(vfile, "last instruction %lu\n", curr_op);
 
     evaluate_all_unresolved();
+
+    /* TODO this is a temporary hack till I add Directive/Value pairs */
+    pair_t p;
+    p.string = "_CLKREG";
+    lpos = pair_t_find(&p, symtable.element, symtable.size, &pair_t_compare_string);
+    if(lpos != symtable.size)
+    {
+        clkreg = symtable.element[lpos].value;
+    }
+
+
     fini_symtable();
 }

@@ -275,12 +275,8 @@ void test_loader()
            b[4] == 0x92 && b[5] == 0x92 && b[6] == 0xdb && b[7] == 0x9b &&
            b[8] == 0xd2 && b[9] == 0x9b && b[10] == 0xf3);
 
-/*
-    data = 8;
-    encode(b, data);
-    assert(b[0] == 0x
     fprintf(stdout, "%s:\tpassed\n", __FUNCTION__);
-*/
+
 }
 
 /***************************************************\

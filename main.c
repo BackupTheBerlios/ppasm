@@ -14,9 +14,10 @@
 u8 opt_verbose = 0;
 u8 opt_raw = 0;
 u8 opt_listing = 0;
-u8 opt_propcmd = 0;
+u8 opt_propcmd = 0xFF;
 u16 num_ops = 0;
 FILE* vfile;
+const char serial_device[] = "/dev/ttyUSB0";
 
 #define HELPMSG1 "This is a Propeller P8A32 assembler by Konstantin Schlese (c) 2010 nulleight@gmail.com\n\
 version "
@@ -30,9 +31,9 @@ options:\n\
         -h: this help message\n\
         -v[0-9]: verbose level\n\
         -u[0-4]: download a program to propeller\n\
-                 0 - shutdown\n\
+                 0 - get version and shutdown\n\
                  1 - download to ram and run\n\
-                 2 - program eeprom\n\
+                 2 - program eeprom and shutdown\n\
                  3 - program eeprom and run\n\
         -s <device>: serial port, where propeller is located"
 
@@ -74,7 +75,9 @@ static const char* outfile = NULL;
 static void (*action)();
 
 /*****************************************************************\
-*   Findes an address @param label                                *
+*                                                                 *
+*   This is the "assemble" action.                                *
+*                                                                 *
 \*****************************************************************/
 void act_assemble()
 {
@@ -107,16 +110,25 @@ void act_assemble()
         fclose(file);
     }
 
-    if(!(file = fopen(outfile, "wb")))
-        sys_error("error opening output file!");
+    if(opt_propcmd != 0xFF)
+    {
+        prop_action(serial_device, opt_propcmd);
+    }
+    else
+    {
+        if(!(file = fopen(outfile, "wb")))
+            sys_error("error opening output file!");
 
-    assemble(file);
+        assemble(file);
 
-    fclose(file);
+        fclose(file);
+    }
 }
 
 /*****************************************************************\
-*   Findes an address @param label                                *
+*                                                                 *
+*   This is a "disassemble" action                                *
+*                                                                 *
 \*****************************************************************/
 
 void act_disassemble()
@@ -135,9 +147,10 @@ void act_disassemble()
     generate_listing(stdout, i);
 }
 
-
 /*************************************************************************\
+*                                                                         *
 *   Main entry                                                            *
+*                                                                         *
 \*************************************************************************/
 #ifndef DO_TESTS
 int main(int argc, char* argv[])
@@ -172,8 +185,9 @@ int main(int argc, char* argv[])
                     break;
 
                 case 'u':
-                    opt_propcmd = argv[parmNum][2] - 0x30;
-                    if(opt_propcmd > 4)
+                    if(isdigit(argv[parmNum][2]) && argv[parmNum][2] - 0x30 < 4)
+                        opt_propcmd = argv[parmNum][2] - 0x30;
+                    else
                         fatal("unknown downloading command");
                     break;
 
@@ -182,7 +196,7 @@ int main(int argc, char* argv[])
 
                 case 'v':
                     if(isdigit(argv[parmNum][2]))
-                        opt_verbose = argv[parmNum][2] - 48;
+                        opt_verbose = argv[parmNum][2] - 0x30;
                     else
                         fatal("-v option needs a number");
                     break;
@@ -203,7 +217,6 @@ int main(int argc, char* argv[])
                         fatal("error: no device specified with -s");
                     break;
 
-
                 default:
                     fatal("error: unknown option %c", argv[parmNum][1]);
             }
@@ -211,13 +224,6 @@ int main(int argc, char* argv[])
     }
 
     action();
-
-    if(opt_propcmd)
-    {
-        if(!serial_device)
-            serial_device = "/dev/ttyUSB0";
-        prop_action(serial_device, opt_propcmd);
-    }
 
     return 0;
 }

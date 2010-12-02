@@ -216,7 +216,7 @@ u8 recieve_pinging(int timeout)
 *   @return propeller version                                                   *
 *                                                                               *
 \********************************************************************************/
-u8 prop_init()
+u8 prop_connect()
 {
     u8 buff[258];
     prop_reset();
@@ -411,20 +411,28 @@ void prop_action(const char* device, u32 command)
 
     set_realtime_priority();
 
-    u8 version = prop_init();
-    printf("found propeller version %u\n", version);
+    u8 version = prop_connect();
 
-    if(version == 1)
-    {
-        prop_send_u32(command);
-        if(command != 1)
-            fatal("FIXME: only load to ram and run is supported for now");
-        prop_send_program(program, num_ops);
-        fprintf(stdout, "program downloaded successfuly");
-    }
-    else
+    if(version != 1)
         fatal("wrong propeller version");
 
+    prop_send_u32(command);
+
+    switch(command)
+    {
+        case CMD_SHUTDOWN:
+            printf("found propeller version %u\n", version);
+            break;
+
+        case CMD_RAM_RUN:
+            prop_send_program(program, num_ops);
+            fprintf(stdout, "program downloaded successfuly");
+            break;
+
+        default:
+            fatal("FIXME: only show version/load to ram and run is supported for now");
+    }
+
     munlockall();
-    restore_serial(fd);
+    restore_serial();
 }

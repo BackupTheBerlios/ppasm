@@ -1,4 +1,5 @@
 #include "assemble.h"
+#include "containers.h"
 #include "util.h"
 #include "opcodes.h"
 #include "assert.h"
@@ -9,18 +10,20 @@ http://www.cliff.biffle.org/software/propeller/binary-format.html
 */
 
 u32 clkfreq = 0;
-u8  initial_clkreg = 0x6F;
+u8  clkreg = 0x6F;
 
 
 /*****************************************************************\
+*                                                                 *
 *   Computes checksum                                             *
+*                                                                 *
 \*****************************************************************/
-u8 compute_checksum(u8* preamb, u8* prog, u16 num_ops)
+u8 compute_checksum(u8* preamb, u8* prog, u16 num_instr)
 {
     u8  sum = 0;
     u8* byteptr = (u8*)prog;
 
-    for(unsigned i = 0; i < (num_ops * sizeof(instruction_t)); i++)
+    for(unsigned i = 0; i < (num_instr * sizeof(instruction_t)); i++)
         sum += byteptr[i];
 
     for(unsigned i = 0; i < PREAMBLE_SIZE; i++)
@@ -46,6 +49,12 @@ u16 count_instructions()
     return ++ops;
 }
 
+/*****************************************************************\
+*                                                                 *
+*   Creates a preamble in @param preamb from a @param prog of     *
+*   @param num_instr size.                                        *
+*                                                                 *
+\*****************************************************************/
 void create_preamble(u8* preamb, u8* prog, u16 num_instr)
 {
     if(clkfreq)
@@ -63,7 +72,7 @@ void create_preamble(u8* preamb, u8* prog, u16 num_instr)
         preamb[3] = 0x04;
     }
 
-    preamb[4] = initial_clkreg;
+    preamb[4] = clkreg;
     preamb[5] = 0; /* initial checksum */
     preamb[6] = 0x10;  /* Program base address. Must be 0x0010 (the word following the Initialization Area). */
     preamb[7] = 0x00;
@@ -106,9 +115,10 @@ void create_preamble(u8* preamb, u8* prog, u16 num_instr)
     preamb[5] = compute_checksum(preamb, prog, num_instr);
 }
 
-
 /*****************************************************************\
-*   Assembles some file input                                    *
+*                                                                 *
+*   Assembles a program into a @param file stream                 *
+*                                                                 *
 \*****************************************************************/
 void assemble(FILE* file)
 {
@@ -134,8 +144,14 @@ void assemble(FILE* file)
     }
 }
 
+DECLARE_FIND(pair_t);
+
+DECLARE_FIND(op_pair_t);
+
 /*****************************************************************\
+*                                                                 *
 *   Generates the listing.                                        *
+*                                                                 *
 \*****************************************************************/
 void generate_listing(FILE* file, size_t num_ops)
 {
@@ -144,10 +160,16 @@ void generate_listing(FILE* file, size_t num_ops)
 
     for(unsigned i = 0; i < num_ops; i++)
     {
-        u8 j = find_if_by_value(program[i].data.cond);
-        u8 o = find_opcode_by_value(program[i].data.opcode);
+        pair_t p;
+        p.value = program[i].data.cond;
+        size_t j = pair_t_find(&p, if_pairs, NUM_IFS, &pair_t_compare_value);
+
+        op_pair_t op;
+        op.value = program[i].data.opcode;
+        size_t o = op_pair_t_find(&op, opcodes, NUM_OPCODES, &op_pair_t_compare_value);
 
         assert(j != NUM_IFS);
+        assert(o != NUM_OPCODES);
 
         u16 dest =  ((u16)(program[i].data.desth)) << 8 | program[i].data.dest;
         u16 src =  ((u16)(program[i].data.srch)) << 8 | program[i].data.src;

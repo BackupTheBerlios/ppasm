@@ -126,7 +126,7 @@
 typedef struct
 {
     const char* string;
-    u8          opcode;
+    u8          value;
     u8          src;
 
     struct
@@ -141,8 +141,6 @@ typedef struct
     } flags;
 } op_pair_t;
 
-u8 find_if_by_value(u8 value);
-u8 find_opcode_by_value(u8 value);
 #pragma pack()
 
 extern op_pair_t opcodes[]; /* table of opcodes */

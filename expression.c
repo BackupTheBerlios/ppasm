@@ -6,11 +6,23 @@ veclable symtable;
 expression_t*   unresolved_src[MAX_INSTRUCTIONS];
 expression_t*   unresolved_dest[MAX_INSTRUCTIONS];
 
+DECLARE_FIND(pair_t);
+
+/*****************************************************************\
+*                                                                 *
+*   Initializes the symbol table.                                 *
+*                                                                 *
+\*****************************************************************/
 void init_symtable()
 {
     veclable_init(&symtable, 10);
 }
 
+/*****************************************************************\
+*                                                                 *
+*   Finalizes the symbol table.                                   *
+*                                                                 *
+\*****************************************************************/
 void fini_symtable()
 {
     for(size_t i = 0; i < symtable.size; i++)
@@ -20,21 +32,9 @@ void fini_symtable()
 }
 
 /*****************************************************************\
-*   Finds a label with the name of @param label_name in symtable. *
-\*****************************************************************/
-size_t find_addr_label(const char* label_name)
-{
-    size_t i = 0;
-    for(; i < symtable.size; i++)
-    {
-        if(!strcmp(symtable.element[i].string, label_name))
-            break;
-    }
-    return i;
-}
-
-/*****************************************************************\
+*                                                                 *
 *   Findes an address @param label                                *
+*                                                                 *
 \*****************************************************************/
 void expression_clear(expression_t* exp)
 {
@@ -50,9 +50,12 @@ void expression_clear(expression_t* exp)
     exp->type = 0;
 }
 
-/*****************************************************************\
-*   Findes an address @param label                                *
-\*****************************************************************/
+/*******************************************************************\
+*                                                                   *
+*   Evaluates expression @param **exp and writes into @param result *
+*   whil updating @param **exp accordingly.                         *
+*                                                                   *
+\*******************************************************************/
 const char* expression_evaluate(expression_t** exp, ulong* result)
 {
     *result = 0;
@@ -61,14 +64,17 @@ const char* expression_evaluate(expression_t** exp, ulong* result)
     {
         if((*exp)->type & EXP_LABEL)
         {
-            size_t lpos = find_addr_label((*exp)->data.label);
+            pair_t p;
+            p.string = (*exp)->data.label;
+            size_t lpos = pair_t_find(&p, symtable.element, symtable.size, &pair_t_compare_string);
             if(lpos == symtable.size)
                 return "cant' resolve a label";
+
             else /* converting label to its value and putting to the expression */
             {
                 free((*exp)->data.label);
-                (*exp)->type &= ~EXP_LABEL;
-                (*exp)->type |= EXP_NUMBER;
+                (*exp)->type &= ~EXP_LABEL; /* removing the lable type */
+                (*exp)->type |= EXP_NUMBER; /* converting it to number type */
                 (*exp)->data.number = symtable.element[lpos].value;
                 assert((*exp)->type & EXP_NUMBER);
             }
@@ -98,12 +104,13 @@ const char* expression_evaluate(expression_t** exp, ulong* result)
         *exp = (*exp)->next;
         free(oldexp);
     }
-
     return 0;
 }
 
 /*****************************************************************\
-*   Substitute labels with their addresses @param label           *
+*                                                                 *
+*   Evaluates all unresolved expressions.                         *
+*                                                                 *
 \*****************************************************************/
 void evaluate_all_unresolved()
 {
