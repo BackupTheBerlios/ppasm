@@ -33,8 +33,6 @@ options:\n\
         -u[0-4]: download a program to propeller\n\
                  0 - get version and shutdown\n\
                  1 - download to ram and run\n\
-                 2 - program eeprom and shutdown\n\
-                 3 - program eeprom and run\n\
         -s <device>: serial port, where propeller is located"
 
 #define QUOTE_X(t) #t

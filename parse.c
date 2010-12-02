@@ -138,9 +138,11 @@ static const char* parse_ref_label(expression_t** exp)
     return "error processing reference label";
 }
 
-/*****************************************************************\
-*   Parses a label @param label                                   *
-\*****************************************************************/
+/***********************************************************************\
+*                                                                       *
+*   Parses a special register @param bad is the lowest register allowed *
+*                                                                       *
+\************************************************************************/
 static const char* parse_special(expression_t** exp, unsigned bad)
 {
     size_t tokensz = strlen(token);

@@ -64,7 +64,7 @@ inline static size_t NAME##_find(NAME* value, NAME* array, size_t arraysz, int(*
     size_t i = 0;\
     for(; i < arraysz; i++)\
     {\
-        if(!comparator(&array[i], value))\
+        if(comparator(&array[i], value))\
         {\
             break;\
         }\
@@ -73,7 +73,7 @@ inline static size_t NAME##_find(NAME* value, NAME* array, size_t arraysz, int(*
 }\
 inline static int NAME##_compare_string(NAME* op1, NAME* op2)\
 {\
-    return strcmp(op1->string, op2->string);\
+    return !strcmp(op1->string, op2->string);\
 }\
 inline static int NAME##_compare_value(NAME* op1, NAME* op2)\
 {\
