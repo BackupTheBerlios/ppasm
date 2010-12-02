@@ -150,7 +150,7 @@ static const char* parse_special(expression_t** exp, unsigned bad)
     pair_t p;
     p.string = lcas_token;
     size_t i = pair_t_find(&p, special_regs, NUM_SPECIAL_REGS, &pair_t_compare_string);
-    if(i != NUM_IFS)
+    if(i != NUM_SPECIAL_REGS)
     {
         if(i > bad)
         {
@@ -638,7 +638,7 @@ void parse(FILE* file)
     /* TODO this is a temporary hack till I add Directive/Value pairs */
     pair_t p;
     p.string = "_CLKREG";
-    lpos = pair_t_find(&p, symtable.element, symtable.size, &pair_t_compare_string);
+    size_t lpos = pair_t_find(&p, symtable.element, symtable.size, &pair_t_compare_string);
     if(lpos != symtable.size)
     {
         clkreg = symtable.element[lpos].value;
